@@ -1,6 +1,8 @@
 package com.tienda.inventario.ui.adapter;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.net.Uri;
 import android.os.Bundle;
 import android.text.TextUtils;
@@ -13,14 +15,15 @@ import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 
 import com.bumptech.glide.Glide;
-import com.google.firebase.storage.FirebaseStorage;
-import com.google.firebase.storage.StorageReference;
 import com.tienda.inventario.database.FirestoreManager;
 import com.tienda.inventario.database.entities.Categoria;
 import com.tienda.inventario.database.entities.Producto;
 import com.tienda.inventario.database.entities.Proveedor;
 import com.tienda.inventario.databinding.ActivityFormProductoBinding;
 
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -30,8 +33,6 @@ public class FormProductoActivity extends AppCompatActivity {
     private static final String TAG = "FormProductoActivity";
     private ActivityFormProductoBinding binding;
     private FirestoreManager firestoreManager;
-    private FirebaseStorage storage;
-    private StorageReference storageRef;
 
     private List<Categoria> listaCategorias = new ArrayList<>();
     private List<Proveedor> listaProveedores = new ArrayList<>();
@@ -62,8 +63,6 @@ public class FormProductoActivity extends AppCompatActivity {
         setContentView(binding.getRoot());
 
         firestoreManager = FirestoreManager.getInstance();
-        storage = FirebaseStorage.getInstance();
-        storageRef = storage.getReference();
 
         setSupportActionBar(binding.toolbar);
         if (getSupportActionBar() != null) {
@@ -102,10 +101,10 @@ public class FormProductoActivity extends AppCompatActivity {
 
         binding.btnVistaPrevia.setOnClickListener(v -> cargarVistaPreviaUrl());
 
-        // NUEVO: Botón para seleccionar desde galería
+        // Botón para seleccionar desde galería
         binding.btnSeleccionarGaleria.setOnClickListener(v -> abrirGaleria());
 
-        // NUEVO: Botón para eliminar imagen seleccionada
+        // Botón para eliminar imagen seleccionada
         binding.btnEliminarImagen.setOnClickListener(v -> eliminarImagenSeleccionada());
     }
 
@@ -140,9 +139,11 @@ public class FormProductoActivity extends AppCompatActivity {
      */
     private void eliminarImagenSeleccionada() {
         imagenSeleccionadaUri = null;
+        imagenUrlFinal = null;
         binding.ivVistaPrevia.setVisibility(android.view.View.GONE);
         binding.btnEliminarImagen.setVisibility(android.view.View.GONE);
         binding.ivVistaPrevia.setImageResource(android.R.drawable.ic_menu_gallery);
+        binding.etImagenUrl.setText("");
         Toast.makeText(this, "Imagen eliminada", Toast.LENGTH_SHORT).show();
     }
 
@@ -288,10 +289,24 @@ public class FormProductoActivity extends AppCompatActivity {
         binding.etStockMinimo.setText(String.valueOf(producto.getStockMinimo()));
         binding.etCodigoBarras.setText(producto.getCodigoBarras() != null ? producto.getCodigoBarras() : "");
 
-        // Mostrar URL de imagen
-        binding.etImagenUrl.setText(producto.getImagenUrl() != null ? producto.getImagenUrl() : "");
-        if (producto.getImagenUrl() != null && !producto.getImagenUrl().isEmpty()) {
-            cargarVistaPreviaUrl();
+        // Mostrar imagen
+        String imagenUrl = producto.getImagenUrl();
+        if (imagenUrl != null && !imagenUrl.isEmpty()) {
+            // Si es una ruta local (file://)
+            if (imagenUrl.startsWith("file://")) {
+                binding.etImagenUrl.setText("");
+                Glide.with(this)
+                        .load(new File(imagenUrl.replace("file://", "")))
+                        .placeholder(android.R.drawable.ic_menu_gallery)
+                        .error(android.R.drawable.ic_menu_gallery)
+                        .into(binding.ivVistaPrevia);
+                binding.ivVistaPrevia.setVisibility(android.view.View.VISIBLE);
+                binding.btnEliminarImagen.setVisibility(android.view.View.VISIBLE);
+            } else {
+                // Si es una URL normal
+                binding.etImagenUrl.setText(imagenUrl);
+                cargarVistaPreviaUrl();
+            }
         }
 
         // Seleccionar categoría
@@ -314,67 +329,74 @@ public class FormProductoActivity extends AppCompatActivity {
     }
 
     /**
-     * Guardar producto (subir imagen si es necesaria y luego guardar en Firestore)
+     * Guardar imagen localmente en el almacenamiento interno de la app
+     */
+    private String guardarImagenLocalmente(Uri uri) {
+        try {
+            // Crear directorio para imágenes
+            File imagenesDir = new File(getFilesDir(), "imagenes_productos");
+            if (!imagenesDir.exists()) {
+                imagenesDir.mkdirs();
+            }
+
+            // Generar nombre único para la imagen
+            String nombreArchivo = "producto_" + UUID.randomUUID().toString() + ".jpg";
+            File archivoImagen = new File(imagenesDir, nombreArchivo);
+
+            // Leer la imagen desde la URI
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            Bitmap bitmap = BitmapFactory.decodeStream(inputStream);
+            inputStream.close();
+
+            // Comprimir y guardar
+            FileOutputStream outputStream = new FileOutputStream(archivoImagen);
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream);
+            outputStream.flush();
+            outputStream.close();
+
+            Log.d(TAG, "✅ Imagen guardada localmente: " + archivoImagen.getAbsolutePath());
+
+            // Retornar ruta en formato file://
+            return "file://" + archivoImagen.getAbsolutePath();
+
+        } catch (Exception e) {
+            Log.e(TAG, "❌ Error al guardar imagen localmente: " + e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Guardar producto
      */
     private void guardarProducto() {
         if (!validarCampos()) {
             return;
         }
 
-        // Si hay imagen de galería seleccionada, subirla primero
+        binding.btnGuardar.setEnabled(false);
+        binding.btnGuardar.setText("Guardando...");
+
+        // Procesar imagen
         if (imagenSeleccionadaUri != null) {
-            binding.btnGuardar.setEnabled(false);
-            binding.btnGuardar.setText("Subiendo imagen...");
-
-            subirImagenAFirebase(imagenSeleccionadaUri, new OnImageUploadListener() {
-                @Override
-                public void onSuccess(String downloadUrl) {
-                    imagenUrlFinal = downloadUrl;
-                    guardarProductoEnFirestore();
-                }
-
-                @Override
-                public void onError(String error) {
-                    binding.btnGuardar.setEnabled(true);
-                    binding.btnGuardar.setText("Guardar");
-                    Toast.makeText(FormProductoActivity.this,
-                            "❌ Error al subir imagen: " + error,
-                            Toast.LENGTH_LONG).show();
-                }
-            });
+            // Guardar imagen de galería localmente
+            imagenUrlFinal = guardarImagenLocalmente(imagenSeleccionadaUri);
+            if (imagenUrlFinal == null) {
+                Toast.makeText(this, "❌ Error al guardar imagen", Toast.LENGTH_SHORT).show();
+                binding.btnGuardar.setEnabled(true);
+                binding.btnGuardar.setText("Guardar");
+                return;
+            }
         } else {
-            // Si hay URL, usarla directamente
+            // Usar URL si existe
             imagenUrlFinal = binding.etImagenUrl.getText().toString().trim();
-            guardarProductoEnFirestore();
         }
+
+        // Guardar producto en Firestore
+        guardarProductoEnFirestore();
     }
 
     /**
-     * Subir imagen a Firebase Storage
-     */
-    private void subirImagenAFirebase(Uri uri, OnImageUploadListener listener) {
-        String nombreArchivo = "productos/" + UUID.randomUUID().toString() + ".jpg";
-        StorageReference imagenRef = storageRef.child(nombreArchivo);
-
-        imagenRef.putFile(uri)
-                .addOnSuccessListener(taskSnapshot -> {
-                    // Obtener URL de descarga
-                    imagenRef.getDownloadUrl().addOnSuccessListener(downloadUri -> {
-                        Log.d(TAG, "✅ Imagen subida: " + downloadUri.toString());
-                        listener.onSuccess(downloadUri.toString());
-                    }).addOnFailureListener(e -> {
-                        Log.e(TAG, "❌ Error al obtener URL: " + e.getMessage());
-                        listener.onError(e.getMessage());
-                    });
-                })
-                .addOnFailureListener(e -> {
-                    Log.e(TAG, "❌ Error al subir imagen: " + e.getMessage());
-                    listener.onError(e.getMessage());
-                });
-    }
-
-    /**
-     * Guardar producto en Firestore (después de tener la URL de imagen)
+     * Guardar producto en Firestore
      */
     private void guardarProductoEnFirestore() {
         Producto producto = new Producto();
@@ -386,7 +408,7 @@ public class FormProductoActivity extends AppCompatActivity {
         producto.setCodigoBarras(binding.etCodigoBarras.getText().toString().trim());
         producto.setIdCategoria(categoriaSeleccionadaId);
         producto.setIdProveedor(proveedorSeleccionadoId);
-        producto.setImagenUrl(imagenUrlFinal);
+        producto.setImagenUrl(imagenUrlFinal != null ? imagenUrlFinal : "");
 
         if (esEdicion && documentoId != null) {
             // ACTUALIZAR
@@ -429,9 +451,9 @@ public class FormProductoActivity extends AppCompatActivity {
 
                 @Override
                 public void onError(String error) {
-                    Log.e(TAG, "❌ Error al guardar: " + error);
+                    Log.e(TAG, "Error al guardar: " + error);
                     Toast.makeText(FormProductoActivity.this,
-                            "❌ Error: " + error,
+                            "Error: " + error,
                             Toast.LENGTH_SHORT).show();
                     binding.btnGuardar.setEnabled(true);
                     binding.btnGuardar.setText("Guardar");
@@ -473,12 +495,12 @@ public class FormProductoActivity extends AppCompatActivity {
         }
 
         if (categoriaSeleccionadaId == -1) {
-            Toast.makeText(this, "❌ Seleccione una categoría", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Seleccione una categoría", Toast.LENGTH_SHORT).show();
             return false;
         }
 
         if (proveedorSeleccionadoId == -1) {
-            Toast.makeText(this, "❌ Seleccione un proveedor", Toast.LENGTH_SHORT).show();
+            Toast.makeText(this, "Seleccione un proveedor", Toast.LENGTH_SHORT).show();
             return false;
         }
 
@@ -489,13 +511,5 @@ public class FormProductoActivity extends AppCompatActivity {
     public boolean onSupportNavigateUp() {
         finish();
         return true;
-    }
-
-    /**
-     * Interface para callback de subida de imagen
-     */
-    private interface OnImageUploadListener {
-        void onSuccess(String downloadUrl);
-        void onError(String error);
     }
 }

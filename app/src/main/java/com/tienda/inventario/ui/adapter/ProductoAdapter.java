@@ -14,6 +14,7 @@ import com.google.android.material.card.MaterialCardView;
 import com.tienda.inventario.R;
 import com.tienda.inventario.database.entities.Producto;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -87,14 +88,28 @@ public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.Produc
         }
 
         public void bind(Producto producto, OnProductoClickListener listener) {
-            // Cargar imagen con Glide
+            // Cargar imagen con Glide (soporta URLs y rutas locales)
             if (producto.getImagenUrl() != null && !producto.getImagenUrl().isEmpty()) {
-                Glide.with(itemView.getContext())
-                        .load(producto.getImagenUrl())
-                        .placeholder(android.R.drawable.ic_menu_gallery)
-                        .error(android.R.drawable.ic_menu_gallery)
-                        .centerCrop()
-                        .into(ivImagenProducto);
+                String imagenUrl = producto.getImagenUrl();
+
+                // Si es una ruta local (file://)
+                if (imagenUrl.startsWith("file://")) {
+                    File imagenFile = new File(imagenUrl.replace("file://", ""));
+                    Glide.with(itemView.getContext())
+                            .load(imagenFile)
+                            .placeholder(android.R.drawable.ic_menu_gallery)
+                            .error(android.R.drawable.ic_menu_gallery)
+                            .centerCrop()
+                            .into(ivImagenProducto);
+                } else {
+                    // Si es una URL normal
+                    Glide.with(itemView.getContext())
+                            .load(imagenUrl)
+                            .placeholder(android.R.drawable.ic_menu_gallery)
+                            .error(android.R.drawable.ic_menu_gallery)
+                            .centerCrop()
+                            .into(ivImagenProducto);
+                }
             } else {
                 ivImagenProducto.setImageResource(android.R.drawable.ic_menu_gallery);
             }
@@ -104,7 +119,7 @@ public class ProductoAdapter extends RecyclerView.Adapter<ProductoAdapter.Produc
             tvPrecio.setText(String.format(Locale.getDefault(), "$%.2f", producto.getPrecioUnitario()));
             tvDescripcion.setText(producto.getDescripcion() != null ? producto.getDescripcion() : "Sin descripción");
 
-            // Categoría y Proveedor (simplificado - ajustar según tus necesidades)
+            // Categoría y Proveedor
             tvCategoria.setText("📦 Cat. " + producto.getIdCategoria());
             tvProveedor.setText("🏢 Prov. " + producto.getIdProveedor());
 

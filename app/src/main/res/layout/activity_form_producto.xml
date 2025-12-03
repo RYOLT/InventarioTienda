@@ -160,7 +160,7 @@
                         android:id="@+id/btnSeleccionarGaleria"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="📷 Galería"
+                        android:text="Galería"
                         android:layout_marginEnd="8dp"
                         style="@style/Widget.MaterialComponents.Button" />
 
@@ -168,7 +168,7 @@
                         android:id="@+id/btnVistaPrevia"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="👁 Vista previa URL"
+                        android:text="Vista previa URL"
                         style="@style/Widget.MaterialComponents.Button.OutlinedButton" />
 
             </LinearLayout>
@@ -200,7 +200,7 @@
                             android:id="@+id/btnEliminarImagen"
                             android:layout_width="match_parent"
                             android:layout_height="wrap_content"
-                            android:text="❌ Eliminar imagen"
+                            android:text="Eliminar imagen"
                             android:visibility="gone"
                             style="@style/Widget.MaterialComponents.Button.TextButton" />
 

@@ -96,7 +96,7 @@
                         android:textColor="#9E9E9E"
                         android:drawableStart="@android:drawable/ic_menu_sort_by_size"
                         android:drawablePadding="4dp"
-                        tools:text="📦 Electrónica" />
+                        tools:text="Electrónica" />
 
                 <TextView
                         android:id="@+id/tvProveedor"
@@ -107,7 +107,7 @@
                         android:textSize="12sp"
                         android:textColor="#9E9E9E"
                         android:gravity="end"
-                        tools:text="🏢 TechnoMundo" />
+                        tools:text="TechnoMundo" />
 
             </LinearLayout>
 

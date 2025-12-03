@@ -30,6 +30,7 @@ import com.tienda.inventario.database.FirestoreManager;
 import com.tienda.inventario.ui.adapter.FormProductoActivity;
 import com.tienda.inventario.ui.adapter.ProductoAdapter;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -85,9 +86,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Cargar categorías desde Firestore
-     */
     private void cargarCategorias() {
         firestoreManager.getCategorias(new FirestoreManager.OnCategoriasListener() {
             @Override
@@ -104,9 +102,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Configurar spinner de categorías para filtro
-     */
     private void configurarSpinnerCategorias() {
         List<String> nombresCategoria = new ArrayList<>();
         nombresCategoria.add("-- Todas las categorías --");
@@ -133,9 +128,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Cargar productos desde Firestore
-     */
     private void cargarProductos() {
         binding.progressBar.setVisibility(View.VISIBLE);
 
@@ -170,9 +162,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Actualizar estadísticas (total productos y valor inventario)
-     */
     private void actualizarEstadisticas(List<Producto> productos) {
         int total = productos.size();
         double valorTotal = 0;
@@ -187,9 +176,6 @@ public class MainActivity extends AppCompatActivity {
         );
     }
 
-    /**
-     * Filtrar productos por categoría
-     */
     private void filtrarPorCategoria(int idCategoria) {
         List<Producto> productosFiltrados = new ArrayList<>();
 
@@ -259,9 +245,6 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    /**
-     * Buscar productos por nombre
-     */
     private void buscarProductos(String termino) {
         List<Producto> resultados = new ArrayList<>();
         String terminoLower = termino.toLowerCase();
@@ -279,9 +262,6 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Mostrar productos con stock bajo
-     */
     private void mostrarStockBajo() {
         List<Producto> stockBajo = new ArrayList<>();
 
@@ -306,11 +286,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     * Mostrar detalles del producto en un diálogo
-     */
     private void mostrarDetallesProducto(Producto producto) {
-        // Crear un layout personalizado para el diálogo
         LinearLayout layout = new LinearLayout(this);
         layout.setOrientation(LinearLayout.VERTICAL);
         layout.setPadding(50, 40, 50, 40);
@@ -326,13 +302,26 @@ public class MainActivity extends AppCompatActivity {
         imageView.setLayoutParams(imageParams);
         imageView.setScaleType(ImageView.ScaleType.CENTER_CROP);
 
-        // Cargar imagen con Glide
+        // Cargar imagen con Glide (soporta URLs y rutas locales)
         if (producto.getImagenUrl() != null && !producto.getImagenUrl().isEmpty()) {
-            Glide.with(this)
-                    .load(producto.getImagenUrl())
-                    .placeholder(android.R.drawable.ic_menu_gallery)
-                    .error(android.R.drawable.ic_menu_gallery)
-                    .into(imageView);
+            String imagenUrl = producto.getImagenUrl();
+
+            if (imagenUrl.startsWith("file://")) {
+                // Es una ruta local
+                File imagenFile = new File(imagenUrl.replace("file://", ""));
+                Glide.with(this)
+                        .load(imagenFile)
+                        .placeholder(android.R.drawable.ic_menu_gallery)
+                        .error(android.R.drawable.ic_menu_gallery)
+                        .into(imageView);
+            } else {
+                // Es una URL normal
+                Glide.with(this)
+                        .load(imagenUrl)
+                        .placeholder(android.R.drawable.ic_menu_gallery)
+                        .error(android.R.drawable.ic_menu_gallery)
+                        .into(imageView);
+            }
         } else {
             imageView.setImageResource(android.R.drawable.ic_menu_gallery);
         }
@@ -391,9 +380,6 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * Actualizar stock en Firestore
-     */
     private void mostrarDialogoActualizarStock(Producto producto) {
         final EditText input = new EditText(this);
         input.setInputType(android.text.InputType.TYPE_CLASS_NUMBER);
@@ -425,7 +411,7 @@ public class MainActivity extends AppCompatActivity {
                                             Toast.makeText(MainActivity.this,
                                                     "✅ Stock actualizado",
                                                     Toast.LENGTH_SHORT).show();
-                                            cargarProductos(); // Recargar
+                                            cargarProductos();
                                         }
 
                                         @Override
@@ -447,9 +433,6 @@ public class MainActivity extends AppCompatActivity {
                 .show();
     }
 
-    /**
-     * Eliminar producto de Firestore
-     */
     private void confirmarEliminarProducto(Producto producto) {
         new MaterialAlertDialogBuilder(this)
                 .setTitle("Confirmar eliminación")
@@ -465,7 +448,7 @@ public class MainActivity extends AppCompatActivity {
                                     Toast.makeText(MainActivity.this,
                                             "✅ Producto eliminado",
                                             Toast.LENGTH_SHORT).show();
-                                    cargarProductos(); // Recargar
+                                    cargarProductos();
                                 }
 
                                 @Override
@@ -502,7 +485,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onResume() {
         super.onResume();
-        cargarProductos(); // Recargar al volver
+        cargarProductos();
     }
 
     @Override
