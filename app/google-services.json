@@ -1,0 +1,30 @@
+{
+  "project_info": {
+    "project_number": "435389859732",
+    "firebase_url": "https://inventario-db-a6063-default-rtdb.firebaseio.com",
+    "project_id": "inventario-db-a6063",
+    "storage_bucket": "inventario-db-a6063.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:435389859732:android:31ef7af7e6e96d82bbb181",
+        "android_client_info": {
+          "package_name": "com.tienda.inventario"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA5tM4UkBSiQ_lVBkB2hnKdxjBRdixbFto"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

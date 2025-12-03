@@ -1,0 +1,188 @@
+<?xml version="1.0" encoding="utf-8"?>
+<com.google.android.material.card.MaterialCardView
+        xmlns:android="http://schemas.android.com/apk/res/android"
+        xmlns:app="http://schemas.android.com/apk/res-auto"
+        xmlns:tools="http://schemas.android.com/tools"
+        android:id="@+id/cardProducto"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="8dp"
+        app:cardElevation="4dp"
+        app:cardCornerRadius="8dp"
+        android:clickable="true"
+        android:focusable="true"
+        android:foreground="?attr/selectableItemBackground">
+
+    <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="16dp">
+
+        <!-- NUEVA: Imagen del producto -->
+        <ImageView
+                android:id="@+id/ivImagenProducto"
+                android:layout_width="80dp"
+                android:layout_height="80dp"
+                android:layout_marginEnd="12dp"
+                android:scaleType="centerCrop"
+                android:background="#F5F5F5"
+                android:contentDescription="Imagen del producto"
+                android:src="@android:drawable/ic_menu_gallery" />
+
+        <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:orientation="vertical">
+
+            <!-- Encabezado: Nombre y Precio -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                <TextView
+                        android:id="@+id/tvNombreProducto"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Nombre del Producto"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="@color/black"
+                        tools:text="Laptop HP" />
+
+                <TextView
+                        android:id="@+id/tvPrecio"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="$0.00"
+                        android:textSize="18sp"
+                        android:textStyle="bold"
+                        android:textColor="#4CAF50"
+                        tools:text="$12,999.00" />
+
+            </LinearLayout>
+
+            <!-- Descripción -->
+            <TextView
+                    android:id="@+id/tvDescripcion"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Descripción del producto"
+                    android:textSize="14sp"
+                    android:textColor="#616161"
+                    android:layout_marginBottom="8dp"
+                    android:maxLines="2"
+                    android:ellipsize="end"
+                    tools:text="Laptop HP Pavilion 15.6 pulgadas, Intel Core i5" />
+
+            <!-- Categoría y Proveedor -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:layout_marginBottom="8dp">
+
+                <TextView
+                        android:id="@+id/tvCategoria"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Categoría"
+                        android:textSize="12sp"
+                        android:textColor="#9E9E9E"
+                        android:drawableStart="@android:drawable/ic_menu_sort_by_size"
+                        android:drawablePadding="4dp"
+                        tools:text="📦 Electrónica" />
+
+                <TextView
+                        android:id="@+id/tvProveedor"
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:text="Proveedor"
+                        android:textSize="12sp"
+                        android:textColor="#9E9E9E"
+                        android:gravity="end"
+                        tools:text="🏢 TechnoMundo" />
+
+            </LinearLayout>
+
+            <!-- Información de Stock -->
+            <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="horizontal"
+                    android:gravity="center_vertical">
+
+                <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_weight="1"
+                        android:orientation="horizontal"
+                        android:gravity="center_vertical">
+
+                    <TextView
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Stock:"
+                            android:textSize="14sp"
+                            android:textStyle="bold"
+                            android:layout_marginEnd="4dp" />
+
+                    <TextView
+                            android:id="@+id/tvStock"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="0"
+                            android:textSize="16sp"
+                            android:textStyle="bold"
+                            android:layout_marginEnd="4dp"
+                            tools:text="25" />
+
+                    <TextView
+                            android:id="@+id/tvStockMinimo"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="(Min: 0)"
+                            android:textSize="12sp"
+                            android:textColor="#9E9E9E"
+                            tools:text="(Min: 10)" />
+
+                </LinearLayout>
+
+                <!-- Indicador de Stock Bajo -->
+                <TextView
+                        android:id="@+id/tvAlertaStock"
+                        android:layout_width="wrap_content"
+                        android:layout_height="wrap_content"
+                        android:text="BAJO"
+                        android:textSize="12sp"
+                        android:textStyle="bold"
+                        android:textColor="#FF5722"
+                        android:background="#FFEBEE"
+                        android:padding="4dp"
+                        android:visibility="gone"
+                        tools:visibility="visible" />
+
+            </LinearLayout>
+
+            <!-- Código de Barras (opcional) -->
+            <TextView
+                    android:id="@+id/tvCodigoBarras"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:text="Código: 0000000000"
+                    android:textSize="11sp"
+                    android:textColor="#BDBDBD"
+                    android:layout_marginTop="4dp"
+                    tools:text="Código: 7501234567890" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</com.google.android.material.card.MaterialCardView>
